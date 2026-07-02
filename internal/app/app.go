@@ -1,9 +1,10 @@
 package app
 
 import (
-	"ShortLink/internal/handlers"
 	"log"
 	"net/http"
+
+	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/handlers"
 )
 
 func Run() {
