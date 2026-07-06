@@ -1,19 +1,31 @@
 package app
 
 import (
-	"log"
-	"net/http"
-
-	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/handlers"
+	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/config"
+	transHTTP "github.com/peterkuchinov/The-link-shortener-on-Golang/internal/http"
+	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/logger"
+	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/service"
+	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/store"
+	"go.uber.org/zap"
 )
 
 func Run() {
-	mux := http.NewServeMux()
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		panic("failed to load configuration: " + err.Error())
+	}
+	
+	log := logger.Init(cfg.Env)
+	defer log.Sync()
 
-	mux.HandleFunc("/health", handlers.HealthHandler)
-	log.Println("The server is running on http://localhost:8080")
+	log.Info("Configuration loaded and validated successfully", zap.String("env", cfg.Env))
 
-	if err := http.ListenAndServe(":8080", mux); err != nil {
-		log.Fatalf("Server run error: %v", err)
+	dbStore := store.NewMemoryStore()
+	linkService := service.NewLinkService(dbStore)
+
+	server := transHTTP.NewServer(":"+cfg.Port, log, linkService)
+
+	if err := server.Start(); err != nil {
+		log.Fatal("HTTP server failed to start", zap.Error(err))
 	}
 }
