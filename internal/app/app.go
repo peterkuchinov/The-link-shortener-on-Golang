@@ -16,7 +16,8 @@ func Run() {
 	}
 	
 	log := logger.Init(cfg.Env)
-	defer log.Sync()
+	// defer log.Sync()	// ДОДЕЛАТЬ!!!
+	defer func() { _ = log.Sync() }()
 
 	log.Info("Configuration loaded and validated successfully", zap.String("env", cfg.Env))
 
