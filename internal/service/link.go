@@ -64,3 +64,7 @@ func (s *LinkService) Shorten(ctx context.Context, url string, customCode string
 
 	return code, nil
 }
+
+func (s *LinkService) GetOroginalURL(ctx context.Context, code string) (string, error) {
+	return s.store.Get(ctx, code)
+}

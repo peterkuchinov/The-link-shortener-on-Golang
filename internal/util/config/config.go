@@ -11,6 +11,7 @@ type Config struct {
 	Port   string `mapstructure:"APP_PORT" validate:"required,numeric"`
 	Env    string `mapstructure:"APP_ENV" validate:"required,oneof=dev stage prod"`
 	AppKey string `mapstructure:"APP_KEY" validate:"required,min=32"`
+	DatabaseURL string `mapstructure:"APP_DATABASE_URL" validate:"required"`
 }
 
 func LoadConfig() (*Config, error) {
