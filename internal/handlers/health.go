@@ -18,5 +18,6 @@ func HealthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	responsible := healthResponsible{Status: "OK"}
-	json.NewEncoder(w).Encode(responsible)
+	//  json.NewEncoder(w).Encode(responsible)	//ДОДЕЛАТЬ!!!
+	_ = json.NewEncoder(w).Encode(responsible)
 }
