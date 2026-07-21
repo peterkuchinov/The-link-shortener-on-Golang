@@ -8,6 +8,7 @@ require (
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/spf13/viper v1.21.0
+	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.28.0
 )
 

@@ -11,10 +11,13 @@ build:
 	go build -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
 	@echo Binary built inside $(BUILD_DIR)/$(BINARY_NAME)
 
-#Написать!!!
+.PHONY: test
 test:
-	@echo "Running tests..."
-	go test -v -race -cover ./...
+	@echo "Generating mocks..."
+	go generate ./...
+	@echo "Running tests with race detection and coverage mapping..."
+	go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+	@echo "Tests finished. To view coverage in browser run: go tool cover -html=coverage.out"
 
 lint:
 	@echo "Running golangci-lint..."
@@ -25,3 +28,10 @@ clean:
 	@powershell -Command "if (Test-Path $(BUILD_DIR)) { Remove-Item -Recurse -Force $(BUILD_DIR) }"
 	go clean
 	@echo "Cleaned!"
+
+help:
+	@echo "run	- run project"
+	@echo "build 	- build project to *.exe"
+	@echo "test 	- start test"
+	@echo "lint 	- run golangci-lint"
+	@echo "clean	- remove build"

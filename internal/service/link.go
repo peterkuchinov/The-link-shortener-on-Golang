@@ -2,21 +2,18 @@ package service
 
 import (
 	"context"
-	"crypto/rand"
-	"errors"
-	"math/big"
+	"fmt"
 	"regexp"
+
+	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/apperror"
+	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/utils"
 )
 
-const alph = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-var (
-	ErrCodeAlreadyExists = errors.New("custom code is already taken")
-	ErrInvalidCustomCode = errors.New("custom code contains invalid characters")
-)
 var validCodeRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 
+//go:generate mockgen -source=link.go -destination=mocks/mock_store.go -package=mocks
 type LinkStore interface {
-	Save(ctx context.Context, url string, code string) error
+	Save(ctx context.Context, code string, url string) error
 	Get(ctx context.Context, code string) (string, error)
 }
 
@@ -28,43 +25,33 @@ func NewLinkService(store LinkStore) *LinkService {
 	return &LinkService{store: store}
 }
 
-func generateRandomCode(length int) (string, error) {
-	res := make([]byte, length)
-	n := int64(len(alph))
-	for i := 0; i < length; i++ {
-		num, err := rand.Int(rand.Reader, big.NewInt(n))
-		if err != nil {
-			return "", err
-		}
-		res[i] = alph[num.Int64()]
-	}
-	return string(res), nil
-}
+func (s *LinkService) Shorten(ctx context.Context, url, customCode string) (string, error) {
+    code := customCode
 
-func (s *LinkService) Shorten(ctx context.Context, url string, customCode string) (string, error) {
-	code := customCode
+    if code != "" {
+        if !validCodeRegex.MatchString(code) {
+            return "", apperror.ErrInvalidCustomCode
+        }
+		
+        existing, err := s.store.Get(ctx, code)
+        if err != nil {
+            return "", fmt.Errorf("service failed to check existing code: %w", err)
+        }
 
-	if code != "" {
-		if !validCodeRegex.MatchString(code) {
-			return "", ErrInvalidCustomCode
-		}
-		if existing, err := s.store.Get(ctx, code); err == nil && existing != "" {
-			return "", ErrCodeAlreadyExists
-		}
-	} else {
-		var err error
-		if code, err = generateRandomCode(6); err != nil {
-			return "", err
-		}
-	}
+        if existing != "" {
+            return "", apperror.ErrCodeAlreadyExists
+        }
+    } else {
+        var err error
+        code, err = utils.GenerateRandomCode(6)
+        if err != nil {
+            return "", err
+        }
+    }
 	
-	if err := s.store.Save(ctx, code, url); err != nil {
-		return "", err
-	}
+    if err := s.store.Save(ctx, code, url); err != nil {
+        return "", err
+    }
 
-	return code, nil
-}
-
-func (s *LinkService) GetOroginalURL(ctx context.Context, code string) (string, error) {
-	return s.store.Get(ctx, code)
+    return code, nil
 }

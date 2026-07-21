@@ -4,14 +4,13 @@ import (
 	"context"
 	"time"
 
-	// "github.com/jackc/pgx"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	transHTTP "github.com/peterkuchinov/The-link-shortener-on-Golang/internal/http"
 	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/logger"
 	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/service"
-	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/store"
-	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/util/config"
+	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/store/store"
+	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/utils/config"
 	"go.uber.org/zap"
 )
 
