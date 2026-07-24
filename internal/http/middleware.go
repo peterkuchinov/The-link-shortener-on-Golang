@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -15,6 +16,10 @@ import (
 
 type Server struct {
 	srv *http.Server
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+    return s.srv.Shutdown(ctx)
 }
 
 func NewServer(addr string, log *zap.Logger, svc *service.LinkService) *Server {

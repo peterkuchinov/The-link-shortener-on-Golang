@@ -29,7 +29,7 @@ func (r *LinkRepository) Save(ctx context.Context, code string, url string) erro
 	return nil
 }
 
-func (r *LinkRepository) GetByCode(ctx context.Context, code string) (string, error) {
+func (r *LinkRepository) Get(ctx context.Context, code string) (string, error) {
 	query := `select original_url from links where code = $1`
 	
 	var originalURL string
