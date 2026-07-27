@@ -15,14 +15,28 @@ var validCodeRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 type LinkStore interface {
 	Save(ctx context.Context, code string, url string) error
 	Get(ctx context.Context, code string) (string, error)
+    IncrementClicks(ctx context.Context, code string) error
 }
 
 type LinkService struct {
 	store LinkStore
+    clickQueue chan ClickJob
 }
 
 func NewLinkService(store LinkStore) *LinkService {
-	return &LinkService{store: store}
+	workerCount := 5
+	queueBuffer := 10000
+
+	s := &LinkService{
+		store:      store,
+		clickQueue: make(chan ClickJob, queueBuffer),
+	}
+
+	for i := 0; i < workerCount; i++ {
+		go s.clickWorker()
+	}
+
+	return s
 }
 
 func (s *LinkService) Shorten(ctx context.Context, url, customCode string) (string, error) {
@@ -54,4 +68,15 @@ func (s *LinkService) Shorten(ctx context.Context, url, customCode string) (stri
     }
 
     return code, nil
+}
+
+func (s *LinkService) GetOriginalURL(ctx context.Context, code string) (string, error) {
+	url, err := s.store.Get(ctx, code)
+	if err != nil {
+		return "", fmt.Errorf("service failed to get link: %w", err)
+	}
+
+	s.TrackClickAsync(code)
+    
+	return url, nil
 }
