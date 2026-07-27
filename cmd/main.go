@@ -1,7 +1,18 @@
 package main
 
-import app "github.com/peterkuchinov/The-link-shortener-on-Golang/internal/app"
+import (
+	"log"
+
+	app "github.com/peterkuchinov/The-link-shortener-on-Golang/internal/app"
+)
 
 func main() {
-	app.Run()
+	application, err := app.New()
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    if err := application.Run(); err != nil {
+        log.Fatal(err)
+    }
 }
