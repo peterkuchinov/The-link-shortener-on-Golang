@@ -55,6 +55,20 @@ func (mr *MockLinkStoreMockRecorder) Get(ctx, code any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockLinkStore)(nil).Get), ctx, code)
 }
 
+// IncrementClicks mocks base method.
+func (m *MockLinkStore) IncrementClicks(ctx context.Context, code string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IncrementClicks", ctx, code)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IncrementClicks indicates an expected call of IncrementClicks.
+func (mr *MockLinkStoreMockRecorder) IncrementClicks(ctx, code any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrementClicks", reflect.TypeOf((*MockLinkStore)(nil).IncrementClicks), ctx, code)
+}
+
 // Save mocks base method.
 func (m *MockLinkStore) Save(ctx context.Context, code, url string) error {
 	m.ctrl.T.Helper()

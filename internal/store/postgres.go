@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	// "github.com/peterkuchinov/The-link-shortener-on-Golang/internal/service"
 )
@@ -41,4 +41,13 @@ func (r *LinkRepository) Get(ctx context.Context, code string) (string, error) {
 		return "", fmt.Errorf("postgres get link error: %w", err)
 	}
 	return originalURL, nil
+}
+
+func (r *LinkRepository) IncrementClicks(ctx context.Context, code string) error {
+	query := `UPDATE links SET clicks = clicks + 1 WHERE code = $1`
+	_, err := r.db.Exec(ctx, query, code)
+	if err != nil {
+		return fmt.Errorf("postgres increment clicks error: %w", err)
+	}
+	return nil
 }

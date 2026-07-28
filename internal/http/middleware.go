@@ -32,6 +32,42 @@ func NewServer(addr string, log *zap.Logger, svc *service.LinkService) *Server {
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "server is running successfully!"})
 	})
+	
+	r.POST("/shorten", func(c *gin.Context) {
+		var req struct {
+			URL        string `json:"url" binding:"required"`
+			CustomCode string `json:"custom_code"`
+		}
+
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+			return
+		}
+		
+		code, err := svc.Shorten(c.Request.Context(), req.URL, req.CustomCode)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusCreated, gin.H{"short_url": fmt.Sprintf("http://%s/%s", addr, code), "code": code})
+	})
+	
+	r.GET("/:code", func(c *gin.Context) {
+		code := c.Param("code")
+		if code == "" || code == "favicon.ico" {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		
+		originalURL, err := svc.GetOriginalURL(c.Request.Context(), code)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "link not found"})
+			return
+		}
+		
+		c.Redirect(http.StatusTemporaryRedirect, originalURL)
+	})
 
 	return &Server{
 		srv: &http.Server{
