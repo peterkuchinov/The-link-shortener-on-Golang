@@ -1,3 +1,5 @@
+[English](README.md) | [Русский](README_ru.md)
+
 # The Link Shortener
 
 This project is a high-performance URL shortening service written in Go.
