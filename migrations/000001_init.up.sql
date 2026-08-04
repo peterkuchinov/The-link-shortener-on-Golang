@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS public.links (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    original_url TEXT NOT NULL,
+    clicks INTEGER DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_links_code ON public.links(code);

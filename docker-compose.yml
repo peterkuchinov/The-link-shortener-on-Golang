@@ -28,7 +28,9 @@ services:
     container_name: link_shortener_db
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=your_secure_password
+      
+      - POSTGRES_PASSWORD=12345
+      
       - POSTGRES_DB=shortener 
     ports:
       - "5432:5432"

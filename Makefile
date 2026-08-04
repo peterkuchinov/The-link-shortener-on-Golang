@@ -29,9 +29,21 @@ clean:
 	go clean
 	@echo "Cleaned!"
 
+migrate-up:
+	docker build -f Dockerfile.migrate -t shortlink-migrate .
+	docker run --rm --network shortlink_app-network shortlink-migrate -path=/migrations -database "postgres://postgres:12345@link_shortener_db:5432/shortener?sslmode=disable" up
+
+migrate-down:
+	docker run --rm -v //ShortLink/migrations:/migrations --network shortlink_app-network migrate/migrate -path=/migrations -database "postgres://postgres:12345@link_shortener_db:5432/shortener?sslmode=disable" down
+
+
+
 help:
-	@echo "run	- run project"
-	@echo "build 	- build project to *.exe"
-	@echo "test 	- start test"
-	@echo "lint 	- run golangci-lint"
-	@echo "clean	- remove build"
+	@echo run		- run project
+	@echo build	 	- build project
+	@echo test	 	- start test
+	@echo lint	 	- run golangci-lint
+	@echo clean		- remove build
+	@echo migrate-up	- start postgres
+	@echo migrate-down	- stop postgres
+
