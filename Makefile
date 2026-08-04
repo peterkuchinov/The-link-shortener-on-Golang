@@ -1,15 +1,31 @@
-BINARY_NAME=shortlink.exe
-BUILD_DIR=./build
+BINARY_NAME=shortlink
+BUILD_DIR=build
 MAIN_PATH=./cmd/main.go
+ENV_PATH=configs
+ENV_FILE=$(ENV_PATH)/.env
+
+ifeq ($(OS),Windows_NT)
+    RM = if exist $(BUILD_DIR) rmdir /s /q $(BUILD_DIR)
+    MKDIR = if not exist $(ENV_PATH) mkdir $(ENV_PATH)
+    BINARY_WITH_EXT = $(BINARY_NAME).exe
+    WRITE = echo $(1) >> $(ENV_FILE)
+    CLEAR_FILE = echo. > $(ENV_FILE)
+else
+    RM = rm -rf $(BUILD_DIR)
+    MKDIR = mkdir -p $(ENV_PATH)
+    BINARY_WITH_EXT = $(BINARY_NAME)
+    WRITE = echo "$(1)" >> $(ENV_FILE)
+    CLEAR_FILE = printf "" > $(ENV_FILE)
+endif
 
 run:
 	go run $(MAIN_PATH)
 
 build:
 	@echo "Building binary..."
-	@powershell -Command "if (!(Test-Path $(BUILD_DIR))) { New-Item -ItemType Directory -Path $(BUILD_DIR) }"
-	go build -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
-	@echo Binary built inside $(BUILD_DIR)/$(BINARY_NAME)
+	$(MKDIR)
+	go build -o $(BUILD_DIR)/$(BINARY_WITH_EXT) $(MAIN_PATH)
+	@echo Binary built inside $(BUILD_DIR)/$(BINARY_WITH_EXT)
 
 .PHONY: test
 test:
@@ -25,9 +41,19 @@ lint:
 
 clean:
 	@echo "Cleaning up..."
-	@powershell -Command "if (Test-Path $(BUILD_DIR)) { Remove-Item -Recurse -Force $(BUILD_DIR) }"
+	$(RM)
 	go clean
 	@echo "Cleaned!"
+
+env:
+	@echo "Generating $(ENV_FILE)..."
+	@$(MKDIR)
+	@echo APP_PORT=8080 > $(ENV_FILE)
+	@$(call WRITE,APP_ENV=dev)
+	@$(call WRITE,APP_KEY=super_secret_string_32_characters_long)
+	@$(call WRITE,APP_DATABASE_URL=postgres://postgres:12345@localhost:5432/shortener?sslmode=disable)
+	@$(call WRITE,APP_REDIS_URL=redis://localhost:6379/0)
+	@echo ".env file created successfully in $(ENV_PATH)/"
 
 migrate-up:
 	docker build -f Dockerfile.migrate -t shortlink-migrate .
@@ -36,14 +62,12 @@ migrate-up:
 migrate-down:
 	docker run --rm -v //ShortLink/migrations:/migrations --network shortlink_app-network migrate/migrate -path=/migrations -database "postgres://postgres:12345@link_shortener_db:5432/shortener?sslmode=disable" down
 
-
-
 help:
-	@echo run		- run project
-	@echo build	 	- build project
-	@echo test	 	- start test
-	@echo lint	 	- run golangci-lint
-	@echo clean		- remove build
-	@echo migrate-up	- start postgres
-	@echo migrate-down	- stop postgres
-
+	@echo run          - run project
+	@echo build        - build project
+	@echo test         - start test
+	@echo lint         - run golangci-lint
+	@echo clean        - remove build
+	@echo migrate-up   - start postgres migrations
+	@echo migrate-down - stop/reverse postgres migrations
+	@echo env          - make file .env
