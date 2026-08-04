@@ -24,7 +24,7 @@ This project is a high-performance URL shortening service written in Go.
 1. Clone the repository:
 
 ```bash
-git clone https://github.com
+git clone https://github.com/peterkuchinov/The-link-shortener-on-Golang
 cd The-link-shortener-on-Golang
 ```
 

@@ -24,7 +24,7 @@
 1. Склонируйте репозиторий:
 
 ```bash
-git clone https://github.com
+git clone https://github.com/peterkuchinov/The-link-shortener-on-Golang
 cd The-link-shortener-on-Golang
 ```
 
