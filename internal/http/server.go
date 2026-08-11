@@ -19,10 +19,10 @@ type Server struct {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-    return s.srv.Shutdown(ctx)
+	return s.srv.Shutdown(ctx)
 }
 
-func NewServer(addr string, log *zap.Logger, svc *service.LinkService) *Server {
+func NewServer(addr string, baseURL string, log *zap.Logger, svc *service.LinkService) *Server {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 
@@ -32,7 +32,7 @@ func NewServer(addr string, log *zap.Logger, svc *service.LinkService) *Server {
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "server is running successfully!"})
 	})
-	
+
 	r.POST("/shorten", func(c *gin.Context) {
 		var req struct {
 			URL        string `json:"url" binding:"required"`
@@ -43,29 +43,30 @@ func NewServer(addr string, log *zap.Logger, svc *service.LinkService) *Server {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 			return
 		}
-		
+
 		code, err := svc.Shorten(c.Request.Context(), req.URL, req.CustomCode)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusCreated, gin.H{"short_url": fmt.Sprintf("http://%s/%s", addr, code), "code": code})
+		c.JSON(http.StatusCreated, gin.H{
+			"short_url": fmt.Sprintf("%s/%s", baseURL, code), "code": code})
 	})
-	
+
 	r.GET("/:code", func(c *gin.Context) {
 		code := c.Param("code")
 		if code == "" || code == "favicon.ico" {
 			c.Status(http.StatusNotFound)
 			return
 		}
-		
+
 		originalURL, err := svc.GetOriginalURL(c.Request.Context(), code)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "link not found"})
 			return
 		}
-		
+
 		c.Redirect(http.StatusTemporaryRedirect, originalURL)
 	})
 
@@ -89,21 +90,21 @@ func (s *Server) Start() error {
 func RequestIDAndLoggerMiddleware(log *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		t1 := time.Now()
-		
+
 		requestID := c.GetHeader("X-Request-ID")
 		if requestID == "" {
 			requestID = generateUUID()
 		}
-		
+
 		c.Header("X-Request-ID", requestID)
-		
+
 		requestLogger := log.With(zap.String("request_id", requestID))
-		
+
 		ctx := logger.ToContext(c.Request.Context(), requestLogger)
 		c.Request = c.Request.WithContext(ctx)
-		
+
 		c.Next()
-		
+
 		latency := time.Since(t1)
 		requestLogger.Info("http request handled",
 			zap.String("method", c.Request.Method),

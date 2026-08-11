@@ -17,7 +17,7 @@ func TestLinkService_Shorten(t *testing.T) {
 		url        string
 		customCode string
 	}
-	
+
 	tests := []struct {
 		name         string
 		args         args
@@ -37,8 +37,8 @@ func TestLinkService_Shorten(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "Error invalid custom code characters",
-			args: args{url: "https://google.com", customCode: "invalid@code!"},
+			name:    "Error invalid custom code characters",
+			args:    args{url: "https://google.com", customCode: "invalid@code!"},
 			mockOpt: func(m *mocks.MockLinkStore) {},
 			want:    "",
 			wantErr: apperror.ErrInvalidCustomCode,

@@ -50,9 +50,10 @@ env:
 	@$(MKDIR)
 	@echo APP_PORT=8080 > $(ENV_FILE)
 	@$(call WRITE,APP_ENV=dev)
+	@$(call WRITE,APP_BASE_URL=http://shortener.local:8080)
 	@$(call WRITE,APP_KEY=super_secret_string_32_characters_long)
-	@$(call WRITE,APP_DATABASE_URL=postgres://postgres:12345@localhost:5432/shortener?sslmode=disable)
-	@$(call WRITE,APP_REDIS_URL=redis://localhost:6379/0)
+	@$(call WRITE,APP_DATABASE_URL=postgres://postgres:12345@postgres:5432/shortener?sslmode=disable)
+	@$(call WRITE,APP_REDIS_URL=redis://redis:6379/0)
 	@echo ".env file created successfully in $(ENV_PATH)/"
 
 migrate-up:

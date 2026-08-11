@@ -52,6 +52,7 @@ func New() (*App, error) {
 
 	server := transHTTP.NewServer(
 		":"+cfg.Port,
+		cfg.BaseURL,
 		log,
 		linkService,
 	)
