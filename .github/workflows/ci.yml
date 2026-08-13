@@ -22,7 +22,6 @@ jobs:
 
     - name: Verify Code Formatting (gofmt)
       run: |
-        # Проверяем форматирование. Если есть неисправленные файлы, выводим их список и роняем шаг (exit 1)
         if [ -n "$(gofmt -l .)" ]; then
           echo "The following files are not formatted properly:"
           gofmt -l .
@@ -33,10 +32,9 @@ jobs:
       run: go mod download
 
     - name: Run Linter
-      uses: golangci/golangci-lint-action@v6
-      with:
-        version: v1.59
-        args: --config=.golangci.yml 
+      run: |
+        curl -sSfL https://githubusercontent.com | sh -s -- -b $(go env GOPATH)/bin v1.59.1
+        $(go env GOPATH)/bin/golangci-lint run
 
     - name: Build Application
       run: |
