@@ -111,14 +111,6 @@ http://localhost:8080/my_custom_alias
 ```
 *The request returns an HTTP `307 Temporary Redirect` status and instantly forwards the user.*
 
-## Swagger
-
-For visual testing and interactive API exploration, use Swagger UI:
-
-```bash
-http://localhost:8080/swagger/index.html
-```
-
 ---
 
 ###### The server operates by creating a short link (with either a random or custom code) and saving it into a PostgreSQL database. Upon accessing the short link via a GET request, the application performs an instant HTTP redirect to the original URL and asynchronously pushes a tracking task into an internal Go channel (`clickQueue`). A pool of 5 active goroutine workers concurrently processes this queue to increment the click counter (`clicks`) for each link in the database, ensuring high throughput without blocking the main HTTP request-response cycle.

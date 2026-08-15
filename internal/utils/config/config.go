@@ -13,7 +13,7 @@ type Config struct {
 	Env         string `mapstructure:"APP_ENV" validate:"required,oneof=dev stage prod"`
 	AppKey      string `mapstructure:"APP_KEY" validate:"required,min=32"`
 	DatabaseURL string `mapstructure:"APP_DATABASE_URL" validate:"required"`
-	RedisURL 	string `mapstructure:"APP_REDIS_URL"`
+	RedisURL    string `mapstructure:"APP_REDIS_URL"`
 	BaseURL     string `mapstructure:"APP_BASE_URL" validate:"required"`
 }
 

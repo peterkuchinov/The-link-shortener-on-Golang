@@ -15,12 +15,12 @@ var validCodeRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 type LinkStore interface {
 	Save(ctx context.Context, code string, url string) error
 	Get(ctx context.Context, code string) (string, error)
-    IncrementClicks(ctx context.Context, code string) error
+	IncrementClicks(ctx context.Context, code string) error
 }
 
 type LinkService struct {
-	store LinkStore
-    clickQueue chan ClickJob
+	store      LinkStore
+	clickQueue chan ClickJob
 }
 
 func NewLinkService(store LinkStore) *LinkService {
@@ -40,34 +40,34 @@ func NewLinkService(store LinkStore) *LinkService {
 }
 
 func (s *LinkService) Shorten(ctx context.Context, url, customCode string) (string, error) {
-    code := customCode
+	code := customCode
 
-    if code != "" {
-        if !validCodeRegex.MatchString(code) {
-            return "", apperror.ErrInvalidCustomCode
-        }
-		
-        existing, err := s.store.Get(ctx, code)
-        if err != nil {
-            return "", fmt.Errorf("service failed to check existing code: %w", err)
-        }
+	if code != "" {
+		if !validCodeRegex.MatchString(code) {
+			return "", apperror.ErrInvalidCustomCode
+		}
 
-        if existing != "" {
-            return "", apperror.ErrCodeAlreadyExists
-        }
-    } else {
-        var err error
-        code, err = utils.GenerateRandomCode(6)
-        if err != nil {
-            return "", err
-        }
-    }
-	
-    if err := s.store.Save(ctx, code, url); err != nil {
-        return "", err
-    }
+		existing, err := s.store.Get(ctx, code)
+		if err != nil {
+			return "", fmt.Errorf("service failed to check existing code: %w", err)
+		}
 
-    return code, nil
+		if existing != "" {
+			return "", apperror.ErrCodeAlreadyExists
+		}
+	} else {
+		var err error
+		code, err = utils.GenerateRandomCode(6)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if err := s.store.Save(ctx, code, url); err != nil {
+		return "", err
+	}
+
+	return code, nil
 }
 
 func (s *LinkService) GetOriginalURL(ctx context.Context, code string) (string, error) {
@@ -77,6 +77,6 @@ func (s *LinkService) GetOriginalURL(ctx context.Context, code string) (string, 
 	}
 
 	s.TrackClickAsync(code)
-    
+
 	return url, nil
 }

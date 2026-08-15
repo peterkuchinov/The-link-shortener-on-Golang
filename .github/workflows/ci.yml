@@ -2,48 +2,51 @@ name: Go CI
 
 on:
   push:
-    branches: [ "master", "main" ]
+    branches: ["master", "main"]
   pull_request:
-    branches: [ "develop", "main" ]
+    branches: ["develop", "main"]
 
 jobs:
   ci-pipeline:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.22'
-        cache: true
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.2"
+          cache: true
 
-    - name: Install dependencies
-      run: go mod download
+      - name: Verify Code Formatting (gofmt)
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "The following files are not formatted properly:"
+            gofmt -l .
+            exit 1
+          fi
 
-    - name: Run Linter
-      continue-on-error: true 
-      uses: golangci/golangci-lint-action@v6
-      with:
-        version: v1.59
-        args: --config=golangci.yml 
+      - name: Install dependencies
+        run: go mod download
 
-    - name: Build Application
-      run: |
-        mkdir -p build
-        go build -v -o build/app ./cmd/main.go
+      - name: Run Linter
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.12.2
 
-    - name: Run Tests    
-      continue-on-error: true 
-      env:
-        GOTOOLCHAIN: local
-      run: go test -v -race -covermode=atomic -coverprofile=coverage.out ./...
+      - name: Build Application
+        run: |
+          mkdir -p build
+          go build -v -o build/app ./cmd/main.go
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: compiled-binary
-        path: build/app
-        retention-days: 5
+      - name: Run Tests
+        run: go test -v -race -covermode=atomic -coverprofile=coverage.out ./...
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-binary
+          path: build/app
+          retention-days: 5

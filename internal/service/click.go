@@ -10,7 +10,7 @@ type ClickJob struct {
 }
 
 func (s *LinkService) clickWorker() {
-	ctx := context.Background() 
+	ctx := context.Background()
 	for job := range s.clickQueue {
 		err := s.store.IncrementClicks(ctx, job.Code)
 		if err != nil {

@@ -1,26 +1,29 @@
+version: "2"
+
 run:
   timeout: 5m
   modules-download-mode: mod
 
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
     - govet
     - staticcheck
-    - gosimple
     - ineffassign
-    - typecheck
     - unused
     - revive
+
+  settings:
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+
+formatters:
+  enable:
     - goimports
-linters-settings:
-  revive:
-    rules:
-      - name: exported
-        disabled: true
 
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
