@@ -1,21 +1,6 @@
-services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: link_shortener_app
-    env_file:
-      - configs/.env
-    ports:
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - app-network
+version: '3.8'
 
+services:
   postgres:
     platform: linux/amd64
     image: postgres:16-alpine
@@ -50,6 +35,45 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    container_name: link_shortener_migrate
+    volumes:
+      - ./migrations:/migrations
+    command: -path=/migrations -database "postgres://postgres:12345@postgres:5432/shortener?sslmode=disable" up
+    networks:
+      - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: link_shortener_app
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=12345
+      - DB_NAME=shortener
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    networks:
+      - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:
