@@ -57,11 +57,10 @@ env:
 	@echo ".env file created successfully in $(ENV_PATH)/"
 
 migrate-up:
-	docker build -f Dockerfile.migrate -t shortlink-migrate .
-	docker run --rm --network shortlink_app-network shortlink-migrate -path=/migrations -database "postgres://postgres:12345@link_shortener_db:5432/shortener?sslmode=disable" up
+	docker compose run --rm migrate
 
 migrate-down:
-	docker run --rm -v //ShortLink/migrations:/migrations --network shortlink_app-network migrate/migrate -path=/migrations -database "postgres://postgres:12345@link_shortener_db:5432/shortener?sslmode=disable" down
+	docker compose run --rm migrate -path=/migrations -database "postgres://postgres:12345@postgres:5432/shortener?sslmode=disable" down 1
 
 help:
 	@echo run          - run project
