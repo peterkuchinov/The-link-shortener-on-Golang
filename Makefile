@@ -8,14 +8,14 @@ ifeq ($(OS),Windows_NT)
     RM = if exist $(BUILD_DIR) rmdir /s /q $(BUILD_DIR)
     MKDIR = if not exist $(ENV_PATH) mkdir $(ENV_PATH)
     BINARY_WITH_EXT = $(BINARY_NAME).exe
-    WRITE = echo $(1) >> $(ENV_FILE)
-    CLEAR_FILE = echo. > $(ENV_FILE)
+    CLEAR_FILE = type nul > $(ENV_FILE)
+    WRITE = echo $(1)>> $(ENV_FILE)
 else
     RM = rm -rf $(BUILD_DIR)
     MKDIR = mkdir -p $(ENV_PATH)
     BINARY_WITH_EXT = $(BINARY_NAME)
-    WRITE = echo "$(1)" >> $(ENV_FILE)
     CLEAR_FILE = printf "" > $(ENV_FILE)
+    WRITE = echo "$(1)" >> $(ENV_FILE)
 endif
 
 run:
@@ -23,9 +23,9 @@ run:
 
 build:
 	@echo "Building binary..."
-	$(MKDIR)
+	@$(MKDIR)
 	go build -o $(BUILD_DIR)/$(BINARY_WITH_EXT) $(MAIN_PATH)
-	@echo Binary built inside $(BUILD_DIR)/$(BINARY_WITH_EXT)
+	@echo "Binary built inside $(BUILD_DIR)/$(BINARY_WITH_EXT)"
 
 .PHONY: test
 test:
@@ -48,20 +48,19 @@ clean:
 env:
 	@echo "Generating $(ENV_FILE)..."
 	@$(MKDIR)
-	@echo APP_PORT=8080 > $(ENV_FILE)
+	@$(CLEAR_FILE)
+	@$(call WRITE,APP_PORT=8080)
 	@$(call WRITE,APP_ENV=dev)
-	@$(call WRITE,APP_BASE_URL=http://shortener.local:8080)
-	@$(call WRITE,APP_KEY=super_secret_string_32_characters_long)
-	@$(call WRITE,APP_DATABASE_URL=postgres://postgres:12345@postgres:5432/shortener?sslmode=disable)
-	@$(call WRITE,APP_REDIS_URL=redis://redis:6379/0)
+	@$(call WRITE,APP_BASE_URL=http://localhost:8080)
+	@$(call WRITE,APP_DATABASE_URL=postgres://postgres:12345@localhost:5432/shortener?sslmode=disable)
+	@$(call WRITE,APP_REDIS_URL=redis://localhost:6379/0)
 	@echo ".env file created successfully in $(ENV_PATH)/"
 
 migrate-up:
-	docker build -f Dockerfile.migrate -t shortlink-migrate .
-	docker run --rm --network shortlink_app-network shortlink-migrate -path=/migrations -database "postgres://postgres:12345@link_shortener_db:5432/shortener?sslmode=disable" up
+	docker compose run --rm migrate
 
 migrate-down:
-	docker run --rm -v //ShortLink/migrations:/migrations --network shortlink_app-network migrate/migrate -path=/migrations -database "postgres://postgres:12345@link_shortener_db:5432/shortener?sslmode=disable" down
+	docker compose run --rm migrate -path=/migrations -database "postgres://postgres:12345@postgres:5432/shortener?sslmode=disable" down 1
 
 help:
 	@echo run          - run project
