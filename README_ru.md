@@ -11,7 +11,6 @@
 - [Команды](#команды)
 - [Docker](#docker)
 - [Postman](#postman)
-- [Swagger](#swagger)
 
 ## Требования
 
@@ -41,13 +40,13 @@ make env
 ### Быстрый запуск через Docker
 Развернуть всю инфраструктуру (приложение, базу данных PostgreSQL и Redis) одной командой:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Локальный запуск (для разработки)
 1. Запустите инфраструктуру базы данных:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 2. Примените миграции для создания необходимых таблиц:
 ```bash
@@ -78,12 +77,12 @@ make run
 
 Запуск сервисов в фоновом режиме:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Остановка и удаление контейнеров:
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ## Postman

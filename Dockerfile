@@ -16,8 +16,6 @@ WORKDIR /app
 
 COPY --from=builder /app/bin/server /app/server
 
-COPY --from=builder /app/configs/.env /app/configs/.env
-
 EXPOSE 8080
 
 CMD ["/app/server"]

@@ -11,7 +11,6 @@ This project is a high-performance URL shortening service written in Go.
 - [Makefile Commands](#makefile-commands)
 - [Docker](#docker)
 - [Postman](#postman)
-- [Swagger](#swagger)
 
 ## Requirements
 
@@ -41,13 +40,13 @@ make env
 ### Quick Start via Docker
 Deploy the entire infrastructure (application, PostgreSQL database, and Redis) with a single command:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Local Development Run
 1. Start the database and redis infrastructure:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 2. Apply database migrations to create the required tables:
 ```bash
@@ -78,12 +77,12 @@ Use standard commands to manage your containers:
 
 Start services in the background:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Stop and remove containers:
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ## Postman
