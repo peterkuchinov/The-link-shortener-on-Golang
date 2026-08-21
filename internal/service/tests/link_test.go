@@ -59,7 +59,7 @@ func TestLinkService_Shorten(t *testing.T) {
 				m.EXPECT().Get(gomock.Any(), "some-code").Return("", errors.New("db connection timeout"))
 			},
 			want:         "",
-			checkErrText: "db connection timeout", 
+			checkErrText: "db connection timeout",
 		},
 	}
 
