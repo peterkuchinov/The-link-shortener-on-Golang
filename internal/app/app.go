@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -27,9 +28,12 @@ func New() (*App, error) {
 		return nil, err
 	}
 
-	log := logger.Init(cfg.Env)
+	logger, err := logger.Init(cfg.Env)
+	if err != nil {
+		log.Fatalf("failed to initialize logger: %v", err)
+	}
 
-	log.Info(
+	logger.Info(
 		"Configuration loaded successfully",
 		zap.String("env", cfg.Env),
 	)
@@ -53,13 +57,13 @@ func New() (*App, error) {
 	server := transHTTP.NewServer(
 		":"+cfg.Port,
 		cfg.BaseURL,
-		log,
+		logger,
 		linkService,
 	)
 
 	return &App{
 		server: server,
 		db:     dbPool,
-		logger: log,
+		logger: logger,
 	}, nil
 }
