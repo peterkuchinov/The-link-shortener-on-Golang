@@ -38,7 +38,7 @@ func (r *LinkRepository) Get(ctx context.Context, code string) (string, error) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return "", apperror.ErrNotFound
 		}
-		return "", err 
+		return "", err
 	}
 	return originalURL, nil
 }

@@ -74,7 +74,7 @@ func (s *LinkService) GetOriginalURL(ctx context.Context, code string) (string, 
 	url, err := s.store.Get(ctx, code)
 	if err != nil {
 		// Возвращаем ошибку в чистом виде (без fmt.Errorf), чтобы SendError в http-слое гарантированно увидел apperror.ErrNotFound
-		return "", err 
+		return "", err
 	}
 
 	s.TrackClickAsync(code)

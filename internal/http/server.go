@@ -52,7 +52,7 @@ func NewServer(addr string, baseURL string, log *zap.Logger, svc *service.LinkSe
 		}
 
 		c.JSON(http.StatusCreated, gin.H{
-			"short_url": fmt.Sprintf("%s/%s", baseURL, code), 
+			"short_url": fmt.Sprintf("%s/%s", baseURL, code),
 			"code":      code,
 		})
 	})
@@ -133,7 +133,7 @@ func SendError(c *gin.Context, err error) {
 	if err == nil {
 		return
 	}
-	
+
 	log := logger.FromContext(c.Request.Context())
 
 	if errors.Is(err, apperror.ErrNotFound) {
@@ -150,8 +150,8 @@ func SendError(c *gin.Context, err error) {
 		c.JSON(http.StatusConflict, ErrorResponse{Error: "This short code is already taken"})
 		return
 	}
-	
+
 	log.Error("internal server error occurred", zap.Error(err))
-	
+
 	c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "An internal server error occurred"})
 }
