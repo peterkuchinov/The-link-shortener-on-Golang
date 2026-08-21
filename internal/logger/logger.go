@@ -4,29 +4,22 @@ import (
 	"context"
 
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type ctxKey struct{}
 
 var loggerKey = ctxKey{}
 
-func Init(env string) *zap.Logger {
-	var config zap.Config
+func Init(env string) (*zap.Logger, error) {
+	var cfg zap.Config
 
-	if env == "production" {
-		config = zap.NewProductionConfig()
+	if env == "prod" {
+		cfg = zap.NewProductionConfig()
 	} else {
-		config = zap.NewDevelopmentConfig()
-		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		cfg = zap.NewDevelopmentConfig()
 	}
 
-	log, err := config.Build()
-	if err != nil {
-		panic("failed to initialize logger: " + err.Error())
-	}
-
-	return log
+	return cfg.Build()
 }
 
 func ToContext(ctx context.Context, log *zap.Logger) context.Context {

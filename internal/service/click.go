@@ -2,27 +2,40 @@ package service
 
 import (
 	"context"
-	"log"
+
+	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/logger"
+	"go.uber.org/zap"
 )
 
 type ClickJob struct {
+	Ctx  context.Context
 	Code string
 }
 
 func (s *LinkService) clickWorker() {
-	ctx := context.Background()
 	for job := range s.clickQueue {
-		err := s.store.IncrementClicks(ctx, job.Code)
+		requestLogger := logger.FromContext(job.Ctx)
+		bgCtx := context.Background()
+		bgCtx = logger.ToContext(bgCtx, requestLogger)
+
+		err := s.store.IncrementClicks(bgCtx, job.Code)
 		if err != nil {
-			log.Printf("click save error for %s: %v", job.Code, err)
+			requestLogger.Error("failed to increment link clicks in background",
+				zap.String("code", job.Code),
+				zap.Error(err),
+			)
+			continue
 		}
+
+		requestLogger.Info("link clicks successfully incremented asynchronously",
+			zap.String("code", job.Code),
+		)
 	}
 }
 
-func (s *LinkService) TrackClickAsync(code string) {
-	select {
-	case s.clickQueue <- ClickJob{Code: code}:
-	default:
-		log.Printf("queue out of range, click miss for %s", code)
+func (s *LinkService) TrackClickAsync(ctx context.Context, code string) {
+	s.clickQueue <- ClickJob{
+		Ctx:  ctx,
+		Code: code,
 	}
 }
