@@ -1,7 +1,10 @@
 package config
 
 import (
+	"errors"
 	"fmt"
+	"log"
+	"os"
 	"strings"
 
 	"github.com/go-playground/validator"
@@ -9,30 +12,30 @@ import (
 )
 
 type Config struct {
-	Port        string `mapstructure:"APP_PORT" validate:"required,numeric"`
-	Env         string `mapstructure:"APP_ENV" validate:"required,oneof=dev stage prod"`
-	DatabaseURL string `mapstructure:"APP_DATABASE_URL" validate:"required"`
-	BaseURL     string `mapstructure:"APP_BASE_URL" validate:"required"`
+	Port        string `mapstructure:"app_port" validate:"required,numeric"`
+	Env         string `mapstructure:"app_env" validate:"required,oneof=dev stage prod"`
+	DatabaseURL string `mapstructure:"app_database_url" validate:"required"`
+	BaseURL     string `mapstructure:"app_base_url" validate:"required"`
 }
 
 func LoadConfig() (*Config, error) {
 	viper.SetConfigFile("./configs/.env")
-
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return nil, fmt.Errorf("error read file config: %w", err)
+		var configFileNotFoundErr viper.ConfigFileNotFoundError
+		if errors.As(err, &configFileNotFoundErr) || os.IsNotExist(err) {
+			log.Println("Local .env file not found. Loading configuration from system environment...")
+		} else {
+			return nil, fmt.Errorf("critical error reading config file: %w", err)
 		}
 	}
 
-	_ = viper.BindEnv("APP_PORT")
-	_ = viper.BindEnv("APP_ENV")
-	_ = viper.BindEnv("APP_KEY")
-	_ = viper.BindEnv("APP_DATABASE_URL")
-	_ = viper.BindEnv("APP_REDIS_URL")
-	_ = viper.BindEnv("APP_BASE_URL")
+	_ = viper.BindEnv("app_port", "APP_PORT")
+	_ = viper.BindEnv("app_env", "APP_ENV")
+	_ = viper.BindEnv("app_database_url", "APP_DATABASE_URL")
+	_ = viper.BindEnv("app_base_url", "APP_BASE_URL")
 
 	var cfg Config
 
@@ -41,7 +44,6 @@ func LoadConfig() (*Config, error) {
 	}
 
 	validate := validator.New()
-
 	if err := validate.Struct(&cfg); err != nil {
 		return nil, fmt.Errorf("error validate config: %w", err)
 	}

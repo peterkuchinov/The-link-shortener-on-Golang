@@ -52,9 +52,10 @@ env:
 	@$(call WRITE,APP_PORT=8080)
 	@$(call WRITE,APP_ENV=dev)
 	@$(call WRITE,APP_BASE_URL=http://localhost:8080)
-	@$(call WRITE,APP_DATABASE_URL=postgres://postgres:12345@localhost:5432/shortener?sslmode=disable)
-	@$(call WRITE,APP_REDIS_URL=redis://localhost:6379/0)
+	@$(call WRITE,APP_DATABASE_URL=postgres://postgres:12345@postgres:5432/shortener?sslmode=disable)
+	@$(call WRITE,APP_REDIS_URL=redis://postgres:6379/0)
 	@echo ".env file created successfully in $(ENV_PATH)/"
+
 
 migrate-up:
 	docker compose run --rm migrate

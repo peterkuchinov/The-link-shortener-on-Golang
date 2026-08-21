@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"regexp"
 
 	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/apperror"
@@ -47,12 +47,12 @@ func (s *LinkService) Shorten(ctx context.Context, url, customCode string) (stri
 			return "", apperror.ErrInvalidCustomCode
 		}
 
-		existing, err := s.store.Get(ctx, code)
+		_, err := s.store.Get(ctx, code)
 		if err != nil {
-			return "", fmt.Errorf("service failed to check existing code: %w", err)
-		}
-
-		if existing != "" {
+			if !errors.Is(err, apperror.ErrNotFound) {
+				return "", err
+			}
+		} else {
 			return "", apperror.ErrCodeAlreadyExists
 		}
 	} else {
@@ -73,7 +73,8 @@ func (s *LinkService) Shorten(ctx context.Context, url, customCode string) (stri
 func (s *LinkService) GetOriginalURL(ctx context.Context, code string) (string, error) {
 	url, err := s.store.Get(ctx, code)
 	if err != nil {
-		return "", fmt.Errorf("service failed to get link: %w", err)
+		// Возвращаем ошибку в чистом виде (без fmt.Errorf), чтобы SendError в http-слое гарантированно увидел apperror.ErrNotFound
+		return "", err
 	}
 
 	s.TrackClickAsync(code)

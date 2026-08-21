@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/apperror"
 	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/logger"
 	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/service"
 	"go.uber.org/zap"
@@ -40,30 +41,32 @@ func NewServer(addr string, baseURL string, log *zap.Logger, svc *service.LinkSe
 		}
 
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid request body"})
 			return
 		}
 
 		code, err := svc.Shorten(c.Request.Context(), req.URL, req.CustomCode)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			SendError(c, err)
 			return
 		}
 
 		c.JSON(http.StatusCreated, gin.H{
-			"short_url": fmt.Sprintf("%s/%s", baseURL, code), "code": code})
+			"short_url": fmt.Sprintf("%s/%s", baseURL, code),
+			"code":      code,
+		})
 	})
 
 	r.GET("/:code", func(c *gin.Context) {
 		code := c.Param("code")
 		if code == "" || code == "favicon.ico" {
-			c.Status(http.StatusNotFound)
+			c.JSON(http.StatusNotFound, ErrorResponse{Error: "Resource not found"})
 			return
 		}
 
 		originalURL, err := svc.GetOriginalURL(c.Request.Context(), code)
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "link not found"})
+			SendError(c, err)
 			return
 		}
 
@@ -120,4 +123,35 @@ func generateUUID() string {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)
 	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+func SendError(c *gin.Context, err error) {
+	if err == nil {
+		return
+	}
+
+	log := logger.FromContext(c.Request.Context())
+
+	if errors.Is(err, apperror.ErrNotFound) {
+		c.JSON(http.StatusNotFound, ErrorResponse{Error: "Resource not found"})
+		return
+	}
+
+	if errors.Is(err, apperror.ErrInvalidCustomCode) {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: "The provided custom code is invalid"})
+		return
+	}
+
+	if errors.Is(err, apperror.ErrCodeAlreadyExists) {
+		c.JSON(http.StatusConflict, ErrorResponse{Error: "This short code is already taken"})
+		return
+	}
+
+	log.Error("internal server error occurred", zap.Error(err))
+
+	c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "An internal server error occurred"})
 }

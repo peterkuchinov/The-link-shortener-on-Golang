@@ -14,12 +14,15 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
-      - app-network
+      app-network:
+        aliases:
+          - postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d shortener"]
       interval: 5s
       timeout: 5s
       retries: 5
+
 
   redis:
     image: redis:7-alpine
@@ -57,14 +60,8 @@ services:
     container_name: link_shortener_app
     ports:
       - "8080:8080"
-    environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=12345
-      - DB_NAME=shortener
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+    env_file:
+      - ./configs/.env
     networks:
       - app-network
     depends_on:

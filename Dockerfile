@@ -1,21 +1,20 @@
 FROM golang:1.26-alpine AS builder
 
-WORKDIR /app
+WORKDIR /build
 
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app/bin/server ./cmd/main.go
-
+RUN CGO_ENABLED=0 GOOS=linux go build -o shortlink-app ./cmd/main.go
 
 FROM alpine:3.19
 
 WORKDIR /app
 
-COPY --from=builder /app/bin/server /app/server
+COPY --from=builder /build/shortlink-app ./server
 
 EXPOSE 8080
 
-CMD ["/app/server"]
+CMD ["./server"]

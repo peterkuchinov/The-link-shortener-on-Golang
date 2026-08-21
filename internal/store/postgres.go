@@ -8,6 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/apperror"
 )
 
 type LinkRepository struct {
@@ -35,9 +36,9 @@ func (r *LinkRepository) Get(ctx context.Context, code string) (string, error) {
 	err := r.db.QueryRow(ctx, query, code).Scan(&originalURL)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", nil
+			return "", apperror.ErrNotFound
 		}
-		return "", fmt.Errorf("postgres get link error: %w", err)
+		return "", err
 	}
 	return originalURL, nil
 }

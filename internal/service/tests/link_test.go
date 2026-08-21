@@ -30,7 +30,7 @@ func TestLinkService_Shorten(t *testing.T) {
 			name: "Success with custom code",
 			args: args{url: "https://google.com", customCode: "my-link"},
 			mockOpt: func(m *mocks.MockLinkStore) {
-				m.EXPECT().Get(gomock.Any(), "my-link").Return("", nil)
+				m.EXPECT().Get(gomock.Any(), "my-link").Return("", apperror.ErrNotFound)
 				m.EXPECT().Save(gomock.Any(), "my-link", "https://google.com").Return(nil)
 			},
 			want:    "my-link",
@@ -59,7 +59,7 @@ func TestLinkService_Shorten(t *testing.T) {
 				m.EXPECT().Get(gomock.Any(), "some-code").Return("", errors.New("db connection timeout"))
 			},
 			want:         "",
-			checkErrText: "service failed to check existing code: db connection timeout",
+			checkErrText: "db connection timeout",
 		},
 	}
 
