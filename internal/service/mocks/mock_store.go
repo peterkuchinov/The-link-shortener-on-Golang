@@ -12,6 +12,7 @@ package mocks
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -81,4 +82,71 @@ func (m *MockLinkStore) Save(ctx context.Context, code, url string) error {
 func (mr *MockLinkStoreMockRecorder) Save(ctx, code, url any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockLinkStore)(nil).Save), ctx, code, url)
+}
+
+// MockLinkCache is a mock of LinkCache interface.
+type MockLinkCache struct {
+	ctrl     *gomock.Controller
+	recorder *MockLinkCacheMockRecorder
+	isgomock struct{}
+}
+
+// MockLinkCacheMockRecorder is the mock recorder for MockLinkCache.
+type MockLinkCacheMockRecorder struct {
+	mock *MockLinkCache
+}
+
+// NewMockLinkCache creates a new mock instance.
+func NewMockLinkCache(ctrl *gomock.Controller) *MockLinkCache {
+	mock := &MockLinkCache{ctrl: ctrl}
+	mock.recorder = &MockLinkCacheMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockLinkCache) EXPECT() *MockLinkCacheMockRecorder {
+	return m.recorder
+}
+
+// Delete mocks base method.
+func (m *MockLinkCache) Delete(ctx context.Context, code string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, code)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockLinkCacheMockRecorder) Delete(ctx, code any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockLinkCache)(nil).Delete), ctx, code)
+}
+
+// Get mocks base method.
+func (m *MockLinkCache) Get(ctx context.Context, code string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Get", ctx, code)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Get indicates an expected call of Get.
+func (mr *MockLinkCacheMockRecorder) Get(ctx, code any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockLinkCache)(nil).Get), ctx, code)
+}
+
+// Set mocks base method.
+func (m *MockLinkCache) Set(ctx context.Context, code, url string, ttl time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Set", ctx, code, url, ttl)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Set indicates an expected call of Set.
+func (mr *MockLinkCacheMockRecorder) Set(ctx, code, url, ttl any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockLinkCache)(nil).Set), ctx, code, url, ttl)
 }

@@ -6,24 +6,27 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	Port        string `mapstructure:"app_port" validate:"required,numeric"`
-	Env         string `mapstructure:"app_env" validate:"required,oneof=dev stage prod"`
-	DatabaseURL string `mapstructure:"app_database_url" validate:"required"`
-	BaseURL     string `mapstructure:"app_base_url" validate:"required"`
-	RedisURL    string `mapstructure:"app_redis_url" validate:"required"`
+	Port        string        `mapstructure:"APP_PORT" validate:"required,numeric"`
+	Env         string        `mapstructure:"APP_ENV" validate:"required,oneof=dev stage prod"`
+	DatabaseURL string        `mapstructure:"APP_DATABASE_URL" validate:"required"`
+	BaseURL     string        `mapstructure:"APP_BASE_URL" validate:"required"`
+	RedisURL    string        `mapstructure:"APP_REDIS_URL" validate:"required"`
+	CacheTTL    time.Duration `mapstructure:"APP_CACHE_TTL" validate:"required"` // Добавили TTL
 }
 
 func LoadConfig() (*Config, error) {
 	viper.SetConfigFile("./configs/.env")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
-	_ = viper.BindEnv("app_redis_url", "APP_REDIS_URL")
+
+	viper.SetDefault("APP_CACHE_TTL", 10*time.Minute)
 
 	if err := viper.ReadInConfig(); err != nil {
 		var configFileNotFoundErr viper.ConfigFileNotFoundError
@@ -34,13 +37,14 @@ func LoadConfig() (*Config, error) {
 		}
 	}
 
-	_ = viper.BindEnv("app_port", "APP_PORT")
-	_ = viper.BindEnv("app_env", "APP_ENV")
-	_ = viper.BindEnv("app_database_url", "APP_DATABASE_URL")
-	_ = viper.BindEnv("app_base_url", "APP_BASE_URL")
+	_ = viper.BindEnv("APP_PORT")
+	_ = viper.BindEnv("APP_ENV")
+	_ = viper.BindEnv("APP_DATABASE_URL")
+	_ = viper.BindEnv("APP_BASE_URL")
+	_ = viper.BindEnv("APP_REDIS_URL")
+	_ = viper.BindEnv("APP_CACHE_TTL")
 
 	var cfg Config
-
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("error unmarshal config: %w", err)
 	}

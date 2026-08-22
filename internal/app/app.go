@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/redis/go-redis/v9"
 
 	transHTTP "github.com/peterkuchinov/The-link-shortener-on-Golang/internal/http"
 	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/logger"
@@ -19,14 +18,13 @@ import (
 )
 
 type App struct {
-	server *transHTTP.Server
-	db     *pgxpool.Pool
-	rdb    *redis.Client
-	logger *zap.Logger
+	server     *transHTTP.Server
+	db         *pgxpool.Pool
+	redisStore *store.RedisStore
+	logger     *zap.Logger
 }
 
 func New() (*App, error) {
-
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
@@ -37,11 +35,6 @@ func New() (*App, error) {
 		log.Fatalf("failed to initialize logger: %v", err)
 	}
 
-	appLogger.Info(
-		"Configuration loaded successfully",
-		zap.String("env", cfg.Env),
-	)
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -49,27 +42,19 @@ func New() (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pgx pool: %w", err)
 	}
-
 	if err := dbPool.Ping(ctx); err != nil {
 		dbPool.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	redisOpts, err := redis.ParseURL(cfg.RedisURL)
+	redisStore, err := store.NewRedisStore(cfg.RedisURL)
 	if err != nil {
 		dbPool.Close()
-		log.Fatalf("failed to parse redis url: %v", err)
-	}
-	rdb := redis.NewClient(redisOpts)
-
-	if err := rdb.Ping(context.Background()).Err(); err != nil {
-		dbPool.Close()
-		log.Fatalf("failed to ping redis: %v", err)
+		return nil, fmt.Errorf("failed to create redis store: %w", err)
 	}
 
-	linkRepo := store.NewLinkRepository(dbPool, rdb)
-
-	linkService := service.NewLinkService(linkRepo)
+	linkRepo := store.NewLinkRepository(dbPool)
+	linkService := service.NewLinkService(linkRepo, redisStore, cfg.CacheTTL)
 
 	server := transHTTP.NewServer(
 		":"+cfg.Port,
@@ -79,9 +64,9 @@ func New() (*App, error) {
 	)
 
 	return &App{
-		server: server,
-		db:     dbPool,
-		rdb:    rdb,
-		logger: appLogger,
+		server:     server,
+		db:         dbPool,
+		redisStore: redisStore,
+		logger:     appLogger,
 	}, nil
 }
