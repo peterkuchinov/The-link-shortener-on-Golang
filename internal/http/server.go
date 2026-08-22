@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/apperror"
 	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/logger"
-	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/service"
 	"go.uber.org/zap"
 )
 
@@ -19,11 +18,16 @@ type Server struct {
 	srv *http.Server
 }
 
+type LinkServiceShortener interface {
+	Shorten(ctx context.Context, url, customCode string) (string, error)
+	GetOriginalURL(ctx context.Context, code string) (string, error)
+}
+
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.srv.Shutdown(ctx)
 }
 
-func NewServer(addr string, baseURL string, log *zap.Logger, svc *service.LinkService) *Server {
+func NewServer(addr string, baseURL string, log *zap.Logger, svc LinkServiceShortener) *Server {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 
@@ -75,10 +79,8 @@ func NewServer(addr string, baseURL string, log *zap.Logger, svc *service.LinkSe
 
 	return &Server{
 		srv: &http.Server{
-			Addr:         addr,
-			Handler:      r,
-			ReadTimeout:  10 * time.Second,
-			WriteTimeout: 10 * time.Second,
+			Addr:    addr,
+			Handler: r,
 		},
 	}
 }
