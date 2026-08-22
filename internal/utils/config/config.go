@@ -16,12 +16,14 @@ type Config struct {
 	Env         string `mapstructure:"app_env" validate:"required,oneof=dev stage prod"`
 	DatabaseURL string `mapstructure:"app_database_url" validate:"required"`
 	BaseURL     string `mapstructure:"app_base_url" validate:"required"`
+	RedisURL    string `mapstructure:"app_redis_url" validate:"required"`
 }
 
 func LoadConfig() (*Config, error) {
 	viper.SetConfigFile("./configs/.env")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
+	_ = viper.BindEnv("app_redis_url", "APP_REDIS_URL")
 
 	if err := viper.ReadInConfig(); err != nil {
 		var configFileNotFoundErr viper.ConfigFileNotFoundError
