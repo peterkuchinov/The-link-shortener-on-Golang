@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/apperror"
 	"github.com/peterkuchinov/The-link-shortener-on-Golang/internal/service"
@@ -21,7 +22,8 @@ func TestLinkService_Shorten(t *testing.T) {
 	tests := []struct {
 		name         string
 		args         args
-		mockOpt      func(m *mocks.MockLinkStore)
+		mockStoreOpt func(m *mocks.MockLinkStore)
+		mockCacheOpt func(m *mocks.MockLinkCache)
 		want         string
 		wantErr      error
 		checkErrText string
@@ -29,37 +31,43 @@ func TestLinkService_Shorten(t *testing.T) {
 		{
 			name: "Success with custom code",
 			args: args{url: "https://google.com", customCode: "my-link"},
-			mockOpt: func(m *mocks.MockLinkStore) {
+			mockStoreOpt: func(m *mocks.MockLinkStore) {
 				m.EXPECT().Get(gomock.Any(), "my-link").Return("", apperror.ErrNotFound)
 				m.EXPECT().Save(gomock.Any(), "my-link", "https://google.com").Return(nil)
+			},
+			mockCacheOpt: func(m *mocks.MockLinkCache) {
+				m.EXPECT().Delete(gomock.Any(), "my-link").Return(nil)
 			},
 			want:    "my-link",
 			wantErr: nil,
 		},
 		{
-			name:    "Error invalid custom code characters",
-			args:    args{url: "https://google.com", customCode: "invalid@code!"},
-			mockOpt: func(m *mocks.MockLinkStore) {},
-			want:    "",
-			wantErr: apperror.ErrInvalidCustomCode,
+			name:         "Error invalid custom code characters",
+			args:         args{url: "https://google.com", customCode: "invalid@code!"},
+			mockStoreOpt: func(m *mocks.MockLinkStore) {},
+			mockCacheOpt: func(m *mocks.MockLinkCache) {},
+			want:         "",
+			wantErr:      apperror.ErrInvalidCustomCode,
 		},
 		{
 			name: "Error custom code already exists",
 			args: args{url: "https://google.com", customCode: "busy-code"},
-			mockOpt: func(m *mocks.MockLinkStore) {
+			mockStoreOpt: func(m *mocks.MockLinkStore) {
 				m.EXPECT().Get(gomock.Any(), "busy-code").Return("https://old.com", nil)
 			},
-			want:    "",
-			wantErr: apperror.ErrCodeAlreadyExists,
+			mockCacheOpt: func(m *mocks.MockLinkCache) {},
+			want:         "",
+			wantErr:      apperror.ErrCodeAlreadyExists,
 		},
 		{
 			name: "Error store Get failed and wrapped with %w",
 			args: args{url: "https://google.com", customCode: "some-code"},
-			mockOpt: func(m *mocks.MockLinkStore) {
+			mockStoreOpt: func(m *mocks.MockLinkStore) {
 				m.EXPECT().Get(gomock.Any(), "some-code").Return("", errors.New("db connection timeout"))
 			},
+			mockCacheOpt: func(m *mocks.MockLinkCache) {},
 			want:         "",
-			checkErrText: "db connection timeout",
+			checkErrText: "service failed to check existing code: db connection timeout",
 		},
 	}
 
@@ -69,9 +77,12 @@ func TestLinkService_Shorten(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStore := mocks.NewMockLinkStore(ctrl)
-			tt.mockOpt(mockStore)
+			tt.mockStoreOpt(mockStore)
 
-			svc := service.NewLinkService(mockStore)
+			mockCache := mocks.NewMockLinkCache(ctrl)
+			tt.mockCacheOpt(mockCache)
+
+			svc := service.NewLinkService(mockStore, mockCache, 10*time.Minute)
 			got, err := svc.Shorten(context.Background(), tt.args.url, tt.args.customCode)
 
 			if tt.wantErr != nil && !errors.Is(err, tt.wantErr) {

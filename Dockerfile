@@ -17,3 +17,4 @@ WORKDIR /app
 COPY --from=builder /build/shortlink-app ./server
 EXPOSE 8080
 CMD ["./server"]
+
